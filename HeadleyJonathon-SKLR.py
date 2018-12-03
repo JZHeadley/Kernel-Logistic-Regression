@@ -10,9 +10,9 @@ import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from support import *
 import time
-
-percTrain = .01
-percTest = .05
+import sys
+percTrain = float(sys.argv[1])#.01
+percTest = float(sys.argv[2])#.05
 
 
 def computeK(x, y):
@@ -34,7 +34,8 @@ def accuracyNP(y_true, y_pred):
     errors = -np.sign(-1+np.sign(np.multiply(y_true, y_pred)))
     # print(errors)
     # print([1 if x[0]==1 else -1 for x in errors])
-    return accuracy_score([1 if x[0] == 1 else -1 for x in errors], y_true)
+    labeled=[1 if x[0] == 1 else -1 for x in errors]
+    return labeled,accuracy_score(labeled, y_true)
 
 
 def separateClasses(x_train, y_train, classValue1, classValue2):
@@ -220,12 +221,12 @@ c_value = c.eval(session=sess)
 b_value = b.eval(session=sess)
 predTrain = predict(npK, c_value, b_value)
 
-accTr = accuracyNP(y_train, predTrain)
+_,accTr = accuracyNP(y_train, predTrain)
 
 predTest = predict(npKtrainVStest, c_value, b_value)
 # print(y_test)
 # print(predTest)
-accTe = accuracyNP(y_test, predTest)
+_,accTe = accuracyNP(y_test, predTest)
 print('Stats: %f %f %f %f %f' % (100*accTr, 100*accTe,
                                  np.mean(np.abs(c_value)), np.mean(c_value), b_value))
 
@@ -248,10 +249,10 @@ for i in range(0, n_epochs):
     # zero-values for a feature weight may not be in the subspace spanned by training samples, i.e. impossible to get with tf.matmul(K,c)
 
     predTrain = predict(npK, c_value, b_value)
-    accTr = accuracyNP(y_train, predTrain)
+    _,accTr = accuracyNP(y_train, predTrain)
 
     predTest = predict(npKtrainVStest, c_value, b_value)
-    accTe = accuracyNP(y_test, predTest)
+    _,accTe = accuracyNP(y_test, predTest)
     print('Stats: %f %f %f %f %f' %
           (100*accTr, 100*accTe, np.mean(np.abs(c_value)), np.mean(c_value), b_value))
 
@@ -260,7 +261,7 @@ est_b = b.eval(session=sess)
 # print("A is",est_a,"b is",est_b)
 predTest = np.dot(npKtrainVStest, est_a)+est_b
 # print("predTest",predTest)
-acc = accuracyNP(y_test, predTest)
+labeled,acc = accuracyNP(y_test, predTest)
 print('Accuracy: %f' % (100*acc))
 
 
@@ -270,23 +271,22 @@ numClass1 = 0
 y_test_class0 = []
 y_test_class1 = []
 test_class = []
+diff=time.time()-start_time
 
 print("That took", "{:.2f}".format(
-    round(time.time()-start_time, 2)), "seconds to run")
-# print("We predicted we have", numClass0, "images of", classValue1, "'s.  We actually have",
-#       y_test_class0.__len__(), "images of", classValue1, "'s")
-# print("We predicted we have", numClass1, "images of", classValue2, "'s.  We actually have",
-#       y_test_class1.__len__(), "images of", classValue2, "'s")
+    round(diff, 2)), "seconds to run")
 
 
 print("Accuracy is", "{0:.2f}".format(round(acc, 4)*100)+"% using",
       y_train.__len__(), "training samples and", y_test.__len__(), "testing samples, each with", fCnt, "features.")
-# metrics = precision_recall_fscore_support(y_test, predTest, labels=[-1, 1])
+metrics = precision_recall_fscore_support(y_test, labeled, labels=[-1, 1])
 
-# print("\t|  Precision\t|  Recall\t|  FScore")
-# print("--------+---------------+---------------+-----------")
-# print("Class 1\t| ", "{0:.4f}".format(round(metrics[0][1], 4)), "\t| ", "{0:.4f}".format(
-#     round(metrics[1][1], 4)), "\t| ", "{0:.4f}".format(round(metrics[2][1], 4)))
-# print("Class 2\t| ", "{0:.4f}".format(round(metrics[0][0], 4)), "\t| ", "{0:.4f}".format(
-#     round(metrics[1][0], 4)), "\t| ", "{0:.4f}".format(round(metrics[2][0], 4)))
-# print()
+print("\t|  Precision\t|  Recall\t|  FScore")
+print("--------+---------------+---------------+-----------")
+print("Class 1\t| ", "{0:.4f}".format(round(metrics[0][1], 4)), "\t| ", "{0:.4f}".format(
+    round(metrics[1][1], 4)), "\t| ", "{0:.4f}".format(round(metrics[2][1], 4)))
+print("Class 2\t| ", "{0:.4f}".format(round(metrics[0][0], 4)), "\t| ", "{0:.4f}".format(
+    round(metrics[1][0], 4)), "\t| ", "{0:.4f}".format(round(metrics[2][0], 4)))
+print()
+# first 2 are time and accuracy followed by class 2 precision recall fscore then class 1 precision recall fscore
+print(diff,round(acc,4),metrics[0][0],metrics[1][0],metrics[2][0],metrics[0][1],metrics[1][1],metrics[2][1])
