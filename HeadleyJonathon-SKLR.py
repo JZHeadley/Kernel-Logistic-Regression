@@ -90,7 +90,7 @@ y_test = norm(y_test, classValue1, classValue2)
 print("done normalizing")
 
 np.set_printoptions(linewidth=250)
-percToForget = .9
+percToForget = .5
 
 
 y_train = forget_a_few(y_train, percToForget)

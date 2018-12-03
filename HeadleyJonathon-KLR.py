@@ -144,9 +144,6 @@ doubleSum = tf.reduce_sum(
 def h_i(i, a, y, k):
     h = tf.reduce_sum(tf.multiply(tf.multiply(a, y), tf.reshape(k[i], (-1, 1))))+b
     return tf.log(1.0+tf.exp(-y*h))
-    
-    # return tf.log(1.0+tf.exp(-tf.multiply(y, h)))
-# doubleSum=tf.Variable(0,name="doubleSum",dtype=tf.float64)
 
 
 iTF = tf.constant(0, name="iTF", dtype="int32")
